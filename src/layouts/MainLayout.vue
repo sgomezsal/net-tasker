@@ -49,7 +49,7 @@
               </q-item-section>
 
               <q-item-section>
-                Calendar
+                Material
               </q-item-section>
           </q-item>
 
