@@ -1,0 +1,42 @@
+{
+  "name": "net-tasker",
+  "version": "0.0.1",
+  "description": "NetTasker is an innovative task management app that transcends traditional to-do lists by introducing the unique feature of linking tasks through hyperlinks. This allows users to create a network of interconnected tasks, providing a clearer picture of project dependencies and priorities. Ideal for managing complex projects or simply organizing daily activities, NetTasker combines the utility of conventional task management with the insight of interconnected task relationships, making it an essential tool for anyone looking to enhance their productivity and project planning.",
+  "productName": "NetTasker",
+  "author": "Santiago Gomez <sgomezsalazar7@gmail.com>",
+  "private": true,
+  "scripts": {
+    "lint": "eslint --ext .js,.vue ./",
+    "test": "echo \"No test specified\" && exit 0",
+    "dev": "quasar dev",
+    "build": "quasar build"
+  },
+  "dependencies": {
+    "@fullcalendar/daygrid": "^6.1.11",
+    "@fullcalendar/interaction": "^6.1.11",
+    "@fullcalendar/timegrid": "^6.1.11",
+    "@fullcalendar/vue": "^6.1.11",
+    "@quasar/extras": "^1.16.4",
+    "markdown-it": "^14.1.0",
+    "quasar": "^2.8.0",
+    "vue": "^3.4.18",
+    "vue-router": "^4.0.12"
+  },
+  "devDependencies": {
+    "@quasar/app-vite": "^1.8.0",
+    "autoprefixer": "^10.4.2",
+    "electron": "^29.1.4",
+    "electron-packager": "^17.1.2",
+    "eslint": "^8.11.0",
+    "eslint-config-airbnb-base": "^15.0.0",
+    "eslint-plugin-import": "^2.20.1",
+    "eslint-plugin-vue": "^9.0.0",
+    "postcss": "^8.4.14",
+    "vite-plugin-checker": "^0.6.4"
+  },
+  "engines": {
+    "node": "^20 || ^18 || ^16",
+    "npm": ">= 6.13.4",
+    "yarn": ">= 1.21.1"
+  }
+}
