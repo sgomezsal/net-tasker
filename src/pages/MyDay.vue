@@ -22,12 +22,11 @@
         </template>
       </q-input>
     </div>
+
     <q-list separator bordered class="bg-dark">
       <q-item
         v-for="(task, index) in tasks"
-        v-ripple
         :key="task.title"
-        @click="openTaskDetails(task)"
         :class="{ 'done bg-gray-1' : task.done }"
         clickable
       >
@@ -40,8 +39,18 @@
             size="lg"
           />
         </q-item-section>
-        <q-item-section>
-          <q-item-label>{{ task.title }}</q-item-label>
+        <q-item-section @click="openTaskDetails(task)">
+          <span v-if="editingIndex !== index">{{ task.title }}</span>
+          <q-input
+            v-else
+            v-model="task.title"
+            @blur="endEdit(index)"
+            @keyup.enter="endEdit(index)"
+            autofocus
+            dense
+            size="lg"
+            class="edit-input"
+          ></q-input>
         </q-item-section>
         <q-item-section v-if="task.done" side>
           <q-btn
@@ -65,19 +74,31 @@
       :breakpoint="996">
       <q-card>
         <q-card-section class="q-mb-md">
-          <q-input
-            v-model="selectedTask.title"
-            dense
-            filled
-            inverted
-            light
-            color="primary"></q-input>
-          <q-checkbox
-            v-model="selectedTask.done"
-            :label="selectedTask.title"
-            class="custom-checkbox"
-            size="lg"
-          ></q-checkbox>
+
+          <div @click.stop="startEdit" class="align-center" >
+            <q-checkbox
+              v-model="selectedTask.done"
+              class="custom-checkbox"
+              size="lg"
+            ></q-checkbox>
+            <span
+              v-if="!editingInDrawer"
+              @click="startEdit"
+              class="editable-title"
+              style="margin-left: 8px;"
+            >{{ selectedTask.title }}</span>
+            <q-input
+              v-else
+              v-model="selectedTask.title"
+              @blur="endEditDrawer"
+              @keyup.enter="endEditDrawer"
+              autofocus
+              dense
+              size="lg"
+              class="editable-input"
+              style="margin-left: 8px;"
+            ></q-input>
+          </div>
 
           <div class="q-mb-md">
             <q-btn
@@ -197,14 +218,49 @@ import { useQuasar } from 'quasar';
 
 const tasks = ref([]);
 const newTask = ref('');
+const editingIndex = ref(null);
+const editingInDrawer = ref(false);
+const editing = ref(false);
 const drawer = ref(false);
-const selectedTask = ref({ tags: [] });
+// Initialize selectedTask with a more detailed default object
+const selectedTask = ref({
+  title: '',
+  done: false,
+  tags: [],
+  linkedTasks: [],
+});
 const $q = useQuasar();
+// Use computed to ensure taskOptions updates when tasks changes
 const taskOptions = computed(() => tasks.value.map((task, index) => ({
   label: task.title,
   value: index,
 })));
 
+function startEdit() {
+  editingInDrawer.value = true;
+  editing.value = false;
+}
+
+function updateTaskInList() {
+  const taskIndex = tasks.value.findIndex((task) => task.id === selectedTask.value.id);
+  if (taskIndex !== -1) {
+    tasks.value[taskIndex] = { ...selectedTask.value };
+  }
+}
+
+function endEditDrawer() {
+  editingInDrawer.value = false;
+  updateTaskInList();
+}
+
+function endEdit(index) {
+  editingIndex.value = null;
+  if (selectedTask.value.title === tasks.value[index].title) {
+    selectedTask.value = { ...tasks.value[index] };
+  }
+}
+
+// Deletes a task from the task list
 function deleteTask(index) {
   $q.dialog({
     title: 'Confirm Deletion',
@@ -214,16 +270,27 @@ function deleteTask(index) {
   }).onOk(() => {
     tasks.value.splice(index, 1);
     $q.notify({ type: 'info', message: 'Task deleted successfully' });
+    if (selectedTask.value.title === tasks.value[index]?.title) {
+      // Clear selectedTask if it was deleted
+      selectedTask.value = {
+        title: '',
+        done: false,
+        tags: [],
+        linkedTasks: [],
+      };
+    }
   });
 }
 
+// Adds a new task to the task list
 function addTask() {
   if (newTask.value.trim() !== '') {
+    const newId = Date.now();
     tasks.value.push({
+      id: newId,
       title: newTask.value,
       done: false,
-      linkedTasks:
-      [],
+      linkedTasks: [],
       tags: [],
     });
     newTask.value = '';
@@ -233,34 +300,31 @@ function addTask() {
   }
 }
 
+// Opens the task details drawer
 function openTaskDetails(task) {
-  if (!Array.isArray(task.linkedTasks)) {
-    task.linkedTasks = [];
-  }
-  if (!Array.isArray(task.tags)) { // Make sure tags is always an array
-    task.tags = [];
-  }
-  selectedTask.value = { ...task, linkedTasks: [...task.linkedTasks], tags: [...task.tags] };
   drawer.value = true;
+  selectedTask.value = { ...task };
+  editing.value = false;
 }
 
+// Toggles a tag for the selected task
 function toggleTag(tag) {
   const index = selectedTask.value.tags.indexOf(tag);
   if (index === -1) {
-    // Tag not present, add it
     selectedTask.value.tags.push(tag);
   } else {
-    // Tag present, remove it
     selectedTask.value.tags.splice(index, 1);
   }
 }
 
-watch(selectedTask, (updatedTask) => {
-  const taskIndex = tasks.value.findIndex((t) => t.title === updatedTask.title);
+// Watch for changes in selectedTask and update the corresponding task in tasks
+watch(selectedTask, (newVal, oldVal) => {
+  const taskIndex = tasks.value.findIndex((task) => task.title === oldVal.title);
   if (taskIndex !== -1) {
-    tasks.value[taskIndex] = { ...updatedTask };
+    tasks.value[taskIndex] = { ...newVal };
   }
-});
+}, { deep: true });
+
 </script>
 
 <style lang="scss">
@@ -272,13 +336,27 @@ watch(selectedTask, (updatedTask) => {
     opacity: 0.5;
   }
   .custom-checkbox .q-checkbox__bg {
-      border-radius: 50%;
-      border-width: 2.5px;
-      background-color: transparent;
+    border-radius: 50%;
+    border-width: 2.5px;
+    background-color: transparent;
   }
   .custom-checkbox .q-checkbox__svg {
     width: 12px !important;
     height: 12px !important;
     transform: translate(35%, 35%);
+  }
+  .edit-input {
+    width: 100%;
+  }
+  .editable-title, .editable-input {
+      display: inline-block;
+      width: 200px;
+      margin-left: 8px;
+      word-wrap: break-word;
+      white-space: normal;
+  }
+  .align-center {
+      display: flex;
+      align-items: center;
   }
 </style>

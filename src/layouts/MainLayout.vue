@@ -43,13 +43,13 @@
             </q-item-section>
           </q-item>
 
-          <q-item to="/event-calendar" clickable v-ripple>
+          <q-item to="/notes-section" clickable v-ripple>
               <q-item-section avatar>
                 <q-icon name="event" />
               </q-item-section>
 
               <q-item-section>
-                Material
+                Notes
               </q-item-section>
           </q-item>
 
