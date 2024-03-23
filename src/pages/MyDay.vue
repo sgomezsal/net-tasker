@@ -22,11 +22,10 @@
         </template>
       </q-input>
     </div>
-
     <q-list separator bordered class="bg-dark">
       <q-item
         v-for="(task, index) in tasks"
-        :key="task.title"
+        :key="task.id"
         :class="{ 'done bg-gray-1' : task.done }"
         clickable
       >
@@ -64,7 +63,6 @@
         </q-item-section>
       </q-item>
     </q-list>
-
     <q-drawer
       v-model="drawer"
       side="right"
@@ -74,8 +72,7 @@
       :breakpoint="996">
       <q-card>
         <q-card-section class="q-mb-md">
-
-          <div @click.stop="startEdit" class="align-center" >
+          <div @click.stop="startEditDrawer" class="align-center" >
             <q-checkbox
               v-model="selectedTask.done"
               class="custom-checkbox"
@@ -83,15 +80,15 @@
             ></q-checkbox>
             <span
               v-if="!editingInDrawer"
-              @click="startEdit"
+              @click="startEditDrawer"
               class="editable-title"
               style="margin-left: 8px;"
             >{{ selectedTask.title }}</span>
             <q-input
               v-else
               v-model="selectedTask.title"
-              @blur="endEditDrawer"
-              @keyup.enter="endEditDrawer"
+              @blur="endEditInDrawer"
+              @keyup.enter="endEditInDrawer"
               autofocus
               dense
               size="lg"
@@ -99,117 +96,92 @@
               style="margin-left: 8px;"
             ></q-input>
           </div>
-
           <div class="q-mb-md">
             <q-btn
               dense
-              @click="toggleTag('Baja')"
+              @click="toggleTagInSelectedTask('Baja')"
               :color="selectedTask.tags.includes('Baja') ? 'red' : 'grey'"
               round icon="battery_0_bar"
               class="q-ml-md"
             ></q-btn>
             <q-btn
               dense
-              @click="toggleTag('Alta')"
+              @click="toggleTagInSelectedTask('Alta')"
               :color="selectedTask.tags.includes('Alta') ? 'green' : 'grey'"
               round icon="battery_full"
               class="q-ml-md"
             ></q-btn>
             <q-btn
               dense
-              @click="toggleTag('Estrella')"
+              @click="toggleTagInSelectedTask('Estrella')"
               :color="selectedTask.tags.includes('Estrella') ? 'yellow' : 'grey'"
               round icon="star"
               class="q-ml-md"
             ></q-btn>
             <q-btn
               dense
-              @click="toggleTag('Rapido')"
+              @click="toggleTagInSelectedTask('Rapido')"
               :color="selectedTask.tags.includes('Rapido') ? 'primary' : 'grey'"
               round icon="timer_off"
               class="q-ml-md"
             ></q-btn>
             <q-btn
               dense
-              @click="toggleTag('Demorado')"
+              @click="toggleTagInSelectedTask('Demorado')"
               :color="selectedTask.tags.includes('Demorado') ? 'primary' : 'grey'"
               round icon="more_time"
               class="q-ml-md"
             ></q-btn>
           </div>
-
           <q-select
-            v-model="selectedTask.linkedTasks"
+            v-model="currentTaskIndex"
             :options="taskOptions"
-            label="Projects"
+            label="Select a task"
             multiple
             filled
             use-chips
             class="q-mb-md"
+            @update:model-value="updateCurrentTaskIndex"
           ></q-select>
-
-          <q-select
-            v-model="selectedTask.linkedTasks"
-            :options="taskOptions"
-            label="Gaols"
-            multiple
-            filled
-            use-chips
-            class="q-mb-md"
-          ></q-select>
-
-          <q-select
-            v-model="selectedTask.linkedTasks"
-            :options="taskOptions"
-            label="Focus Areas"
-            multiple
-            filled
-            use-chips
-            class="q-mb-md"
-          ></q-select>
-
           <div class="" style="max-width: 300px">
-            <q-input filled v-model="date">
-              <template v-slot:prepend>
-                <q-icon name="event" class="cursor-pointer">
-                  <q-popup-proxy cover transition-show="scale" transition-hide="scale">
-                    <q-date v-model="date" mask="YYYY-MM-DD HH:mm">
-                      <div class="row items-center justify-end">
-                        <q-btn v-close-popup label="Close" color="primary" flat />
-                      </div>
-                    </q-date>
-                  </q-popup-proxy>
-                </q-icon>
-              </template>
-
-              <template v-slot:append>
-                <q-icon name="access_time" class="cursor-pointer">
-                  <q-popup-proxy cover transition-show="scale" transition-hide="scale">
-                    <q-time v-model="date" mask="YYYY-MM-DD HH:mm" format24h>
-                      <div class="row items-center justify-end">
-                        <q-btn v-close-popup label="Close" color="primary" flat />
-                      </div>
-                    </q-time>
-                  </q-popup-proxy>
-                </q-icon>
-              </template>
-            </q-input>
-          </div>
-
-        </q-card-section>
-      </q-card>
-    </q-drawer>
-
-    <div
-      v-if='!tasks.length'
-      class="no-tasks absolute-center">
-      <q-icon
-        name="hub"
-        size="100px"
-        color="primary"
-      />
-    </div>
-  </q-page>
+              <q-input filled v-model="date">
+<template v-slot:prepend>
+<q-icon name="event" class="cursor-pointer">
+<q-popup-proxy cover transition-show="scale" transition-hide="scale">
+<q-date v-model="date" mask="YYYY-MM-DD HH:mm">
+<div class="row items-center justify-end">
+<q-btn v-close-popup label="Close" color="primary" flat />
+</div>
+</q-date>
+</q-popup-proxy>
+</q-icon>
+</template>
+<template v-slot:append>
+<q-icon name="access_time" class="cursor-pointer">
+<q-popup-proxy cover transition-show="scale" transition-hide="scale">
+<q-time v-model="date" mask="YYYY-MM-DD HH:mm" format24h>
+<div class="row items-center justify-end">
+<q-btn v-close-popup label="Close" color="primary" flat />
+</div>
+</q-time>
+</q-popup-proxy>
+</q-icon>
+</template>
+</q-input>
+</div>
+</q-card-section>
+</q-card>
+</q-drawer>
+<div
+ v-if='!tasks.length'
+ class="no-tasks absolute-center">
+<q-icon
+   name="hub"
+   size="100px"
+   color="primary"
+ />
+</div>
+</q-page>
 </template>
 
 <script setup>
@@ -220,25 +192,23 @@ const tasks = ref([]);
 const newTask = ref('');
 const editingIndex = ref(null);
 const editingInDrawer = ref(false);
-const editing = ref(false);
 const drawer = ref(false);
-// Initialize selectedTask with a more detailed default object
 const selectedTask = ref({
+  id: '',
   title: '',
   done: false,
   tags: [],
   linkedTasks: [],
 });
 const $q = useQuasar();
-// Use computed to ensure taskOptions updates when tasks changes
 const taskOptions = computed(() => tasks.value.map((task, index) => ({
   label: task.title,
   value: index,
 })));
+const currentTaskIndex = ref(null);
 
-function startEdit() {
+function startEditDrawer() {
   editingInDrawer.value = true;
-  editing.value = false;
 }
 
 function updateTaskInList() {
@@ -248,19 +218,18 @@ function updateTaskInList() {
   }
 }
 
-function endEditDrawer() {
+function endEditInDrawer() {
   editingInDrawer.value = false;
   updateTaskInList();
 }
 
 function endEdit(index) {
   editingIndex.value = null;
-  if (selectedTask.value.title === tasks.value[index].title) {
+  if (selectedTask.value.id === tasks.value[index].id) {
     selectedTask.value = { ...tasks.value[index] };
   }
 }
 
-// Deletes a task from the task list
 function deleteTask(index) {
   $q.dialog({
     title: 'Confirm Deletion',
@@ -270,9 +239,9 @@ function deleteTask(index) {
   }).onOk(() => {
     tasks.value.splice(index, 1);
     $q.notify({ type: 'info', message: 'Task deleted successfully' });
-    if (selectedTask.value.title === tasks.value[index]?.title) {
-      // Clear selectedTask if it was deleted
+    if (selectedTask.value.id === tasks.value[index]?.id) {
       selectedTask.value = {
+        id: '',
         title: '',
         done: false,
         tags: [],
@@ -282,16 +251,15 @@ function deleteTask(index) {
   });
 }
 
-// Adds a new task to the task list
 function addTask() {
   if (newTask.value.trim() !== '') {
-    const newId = Date.now();
+    const newId = Date.now().toString();
     tasks.value.push({
       id: newId,
       title: newTask.value,
       done: false,
-      linkedTasks: [],
       tags: [],
+      linkedTasks: [],
     });
     newTask.value = '';
     $q.notify({ type: 'positive', message: 'Task added successfully' });
@@ -300,15 +268,12 @@ function addTask() {
   }
 }
 
-// Opens the task details drawer
 function openTaskDetails(task) {
   drawer.value = true;
   selectedTask.value = { ...task };
-  editing.value = false;
 }
 
-// Toggles a tag for the selected task
-function toggleTag(tag) {
+function toggleTagInSelectedTask(tag) {
   const index = selectedTask.value.tags.indexOf(tag);
   if (index === -1) {
     selectedTask.value.tags.push(tag);
@@ -317,46 +282,55 @@ function toggleTag(tag) {
   }
 }
 
-// Watch for changes in selectedTask and update the corresponding task in tasks
-watch(selectedTask, (newVal, oldVal) => {
-  const taskIndex = tasks.value.findIndex((task) => task.title === oldVal.title);
+watch(currentTaskIndex, (newIndex) => {
+  if (newIndex !== null && tasks.value[newIndex]) {
+    selectedTask.value = { ...tasks.value[newIndex] };
+    drawer.value = true;
+  }
+});
+
+watch(selectedTask, (newVal) => {
+  const taskIndex = tasks.value.findIndex((task) => task.id === newVal.id);
   if (taskIndex !== -1) {
     tasks.value[taskIndex] = { ...newVal };
   }
 }, { deep: true });
 
-</script>
+function updateCurrentTaskIndex(val) {
+  currentTaskIndex.value = val;
+}
 
+</script>
 <style lang="scss">
   .done .q-item__label {
-    text-decoration: line-through;
-    color: #bbb;
+  text-decoration: line-through;
+  color: #bbb;
   }
   .no-tasks {
-    opacity: 0.5;
+  opacity: 0.5;
   }
   .custom-checkbox .q-checkbox__bg {
-    border-radius: 50%;
-    border-width: 2.5px;
-    background-color: transparent;
+  border-radius: 50%;
+  border-width: 2.5px;
+  background-color: transparent;
   }
   .custom-checkbox .q-checkbox__svg {
-    width: 12px !important;
-    height: 12px !important;
-    transform: translate(35%, 35%);
+  width: 12px !important;
+  height: 12px !important;
+  transform: translate(35%, 35%);
   }
   .edit-input {
-    width: 100%;
+  width: 100%;
   }
   .editable-title, .editable-input {
-      display: inline-block;
-      width: 200px;
-      margin-left: 8px;
-      word-wrap: break-word;
-      white-space: normal;
+  display: inline-block;
+  width: 200px;
+  margin-left: 8px;
+  word-wrap: break-word;
+  white-space: normal;
   }
   .align-center {
-      display: flex;
-      align-items: center;
+  display: flex;
+  align-items: center;
   }
 </style>
