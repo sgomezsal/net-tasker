@@ -4,7 +4,7 @@
       <q-input
         v-model="newTask"
         @keyup.enter="addTask"
-        class="col"
+        class="col-8"
         square
         filled
         bg-color="dark"
@@ -21,12 +21,24 @@
           />
         </template>
       </q-input>
+      <q-select
+        v-model="filterTag"
+        :options="['Rapido', 'Demorado', 'Alta', 'Baja', 'Estrella']"
+        label="Filter tasks"
+        outlined
+        dense
+        class="col-4"
+      ></q-select>
     </div>
-    <q-list separator bordered class="bg-dark">
+    <q-list
+      separator
+      bordered
+      class="bg-dark"
+    >
       <q-item
-        v-for="(task, index) in tasks"
+        v-for="(task, index) in filteredTasks"
         :key="task.id"
-        :class="{ 'done bg-gray-1' : task.done }"
+        :class="{ 'done bg-gray-1': task.done }"
         clickable
       >
         <q-item-section avatar>
@@ -39,7 +51,9 @@
           />
         </q-item-section>
         <q-item-section @click="openTaskDetails(task)">
-          <span v-if="editingIndex !== index">{{ task.title }}</span>
+          <span
+            v-if="editingIndex !== index"
+          >{{ task.title }}</span>
           <q-input
             v-else
             v-model="task.title"
@@ -50,8 +64,22 @@
             size="lg"
             class="edit-input"
           ></q-input>
+          <div
+            class="q-mt-xs"
+            v-if="task.tags && task.tags.length"
+          >
+            <q-chip
+              v-for="tag in task.tags"
+              :key="tag"
+              class="q-mr-xs"
+              outlined
+            >{{ tag }}</q-chip>
+          </div>
         </q-item-section>
-        <q-item-section v-if="task.done" side>
+        <q-item-section
+          v-if="task.done"
+          side
+        >
           <q-btn
             @click.stop="deleteTask(index)"
             flat
@@ -189,6 +217,13 @@ import { ref, watch, computed } from 'vue';
 import { useQuasar } from 'quasar';
 
 const tasks = ref([]);
+const filterTag = ref('');
+const filteredTasks = computed(() => {
+  if (!filterTag.value) {
+    return tasks.value;
+  }
+  return tasks.value.filter((task) => task.tags.includes(filterTag.value));
+});
 const newTask = ref('');
 const editingIndex = ref(null);
 const editingInDrawer = ref(false);
